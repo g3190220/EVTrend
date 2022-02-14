@@ -1,0 +1,290 @@
+﻿@using EVTrend.Areas.News.Models
+@model EVTrend.Areas.News.Models.NewsPageModel;
+@{
+    ViewData["MgtTitle"] = "最新消息管理";
+    ViewData["AddTitle"] = "新增消息";
+}
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js"></script>
+</head>
+<body>
+    <div class="container" id="MgtNews">
+        <div class="row">
+            <!-- ko ifnot: IsClickAdd() -->
+            <h1 id="title">@ViewData["MgtTitle"]</h1>
+            <!-- /ko -->
+            <!-- ko if: IsClickAdd() -->
+            <h1 id="title">@ViewData["AddTitle"]</h1>
+            <!-- /ko -->
+            <div class="col-12" style="margin: 10px 0px 10px 0px;">
+                <!-- ko ifnot: IsClickAdd() -->
+                <button type="button" class="btn btn-primary" onclick="add()">新增</button>
+                <!-- /ko -->
+            </div>
+            <div class="col-12" id="add" name="add" style="display: none;">
+                <form method="POST" id="addNewsForm" name="addNewsForm">
+                    <div class="col-12 form-inline">
+                        <label>消息類型：</label>
+                        <select class="form-control required" id="addNewsTypeNo" name="addNewsTypeNo" asp-items="@(new SelectList(Model.NewsTypes, nameof(NewsTypeModel.NewsTypeNo), nameof(NewsTypeModel.TypeName)))">
+                        </select>
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>標題：</label>
+                        <input type="text" class="form-control required" id="addNewsTitle" name="addNewsTitle">
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>消息內容：</label>
+                        <input type="text" class="form-control required" id="addNewsContent" name="addNewsContent">
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>連結：</label>
+                        <input type="text" class="form-control required" id="addNewsLink" name="addNewsLink">
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <button type="submit" class="btn btn-success" onclick="addNews('addNewsTypeNo', 'addNewsTitle', 'addNewsContent', 'addNewsLink'); return false;">確認</button>
+                        <span>&nbsp;&nbsp;</span>
+                        <button type="button" class="btn btn-secondary" onclick="cancelAdd()">取消</button>
+                    </div>
+                </form>                
+            </div>
+            <div class="col-12">
+                <table class="table" id="newsTable" name="newsTable" style="text-align: center;">
+                    <thead>
+                        <tr>
+                            <th scope="col">消息編號</th>
+                            <th scope="col">消息類型</th>
+                            <th scope="col">標題</th>
+                            <th scope="col">內容</th>
+                            <th scope="col">觸及次數</th>
+                            <th scope="col">創立時間</th>
+                            <th scope="col">修改時間</th>
+                            <th scope="col">執行動作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var news in Model.News)
+                        {
+                            <tr>
+                                <!-- ko ifnot: IsEdit() && Item() == @news.NewsNo -->
+                                <td class="align-middle">@news.NewsNo</td>
+                                <td class="align-middle">@Model.NewsTypesDictionary[@news.NewsTypeNo].TypeName</td>
+                                <td class="align-middle">@news.NewsTitle</td>
+                                <td class="align-middle">@news.NewsContent</td>
+                                <td class="align-middle">@news.NewsHits</td>
+                                <td class="align-middle">@news.CreateTime.ToString("D", new System.Globalization.CultureInfo("zh-TW"))</td>
+                                @if (news.ModifyTime.Year == 1)
+                                {
+                                    <td class="align-middle">N/A</td>
+                                }
+                                else
+                                {
+                                    <td class="align-middle">@news.ModifyTime.ToString("D", new System.Globalization.CultureInfo("zh-TW"))</td>
+                                }
+                                <td class="align-middle">
+                                    <!-- ko if: IsClickEdit() && Item() != @news.NewsNo -->
+                                    <button type="button" class="btn btn-primary" disabled="disabled">修改</button>
+                                    <span>&nbsp;&nbsp;</span>
+                                    <button type="button" class="btn btn-danger" disabled="disabled">刪除</button>
+                                    <!-- /ko -->
+                                    <!-- ko ifnot: IsClickEdit() -->
+                                    <button type="button" class="btn btn-primary" id="Edit" onclick="editNews('@news.NewsNo')">修改</button>
+                                    <span>&nbsp;&nbsp;</span>
+                                    <button type="button" class="btn btn-danger" onclick="deleteNews('@news.NewsNo')">刪除</button>
+                                    <!-- /ko -->
+                                </td>
+                                <!-- /ko -->
+                            </tr>
+                            <tr>
+                                <!-- ko if: IsEdit() && Item() == @news.NewsNo -->
+                                <td class="align-middle" id="newsNo">@news.NewsNo</td>
+                                <td class="align-middle" id="newsTypeNo"><select class="form-control required" id="editNewsType" name="editNewsType" asp-items="@(new SelectList(Model.NewsTypes, nameof(NewsTypeModel.NewsTypeNo), nameof(NewsTypeModel.TypeName)))">
+                        </select></td>
+                                <td class="align-middle">
+                                    <input type="text" class="form-control" id="editNewsTitle" name="editNewsTitle" value="@news.NewsTitle" style="width: 160px;">
+                                </td>
+                                <td class="align-middle">
+                                    <input type="text" class="form-control" id="editNewsContent" name="editNewsContent" value="@news.NewsContent" style="width: 160px;">
+                                </td>
+                                <td class="align-middle" id="NewsHits">@news.NewsHits</td>
+                                <td class="align-middle">@news.CreateTime.ToString("D", new System.Globalization.CultureInfo("zh-TW"))</td>
+                                @if (news.ModifyTime.Year == 1)
+                                {
+                                    <td class="align-middle">N/A</td>
+                                }
+                                else
+                                {
+                                    <td class="align-middle">@news.ModifyTime.ToString("D", new System.Globalization.CultureInfo("zh-TW"))</td>
+                                }
+                                <td class="align-middle">
+                                    <button type="button" class="btn btn-success" onclick="updateNews(@news.NewsNo, 'editNewsTitle', 'editNewsContent', 'editNewsType')">確認</button>
+                                    <span>&nbsp;&nbsp;</span>
+                                    <button type="button" class="btn btn-secondary" onclick="cancelEdit(@news.NewsNo)">取消</button>
+                                </td>
+                                <!-- /ko -->
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+    this.IsClickAdd = ko.observable(false);
+    this.IsEdit = ko.observable(false);
+    this.IsClickEdit = ko.observable(false);
+    this.Item = ko.observable(0);
+    ko.applyBindings($("#MgtNews").get(0));
+
+    function add() {
+        this.IsClickAdd(true);
+
+        var add = document.getElementById("add");
+        var newsTable = document.getElementById("newsTable");
+
+        add.style.display = "block";
+        newsTable.style.display = "none";
+    }
+
+    function addNews(addNewsTypeNo, addNewsTitle, addNewsContent, addNewsLink) {
+        var addNewsTypeNo = document.getElementById(addNewsTypeNo).value;
+        var addNewsTitle = document.getElementById(addNewsTitle).value;
+        var addNewsContent = document.getElementById(addNewsContent).value;
+        var addNewsLink = document.getElementById(addNewsLink).value
+        
+        if (addNewsTitle.length == 0 || addNewsContent.length == 0||
+            addNewsTitle.length > 50 || addNewsContent.length > 200||
+            addNewsLink.length == 0) {
+            alert("標題與內容不可為空，且標題要在50字內，內容不可超過200字");
+            return false;
+        }
+
+        if (!addNewsLink.includes("https")) {
+            alert("連結輸入內容必須為網址");
+            return false;
+        }
+
+        let args = {
+            NewsTypeNo: addNewsTypeNo,
+            NewsTitle: addNewsTitle,
+            NewsContent: addNewsContent,
+            NewsLink: addNewsLink
+        };
+
+        $.ajax({
+            url: '@Url.Action("AddNews")',
+            data: args,
+            method: "POST",
+            async: true,
+            success: function (response) {
+                if (response) {
+                    alert("新增成功")
+                    window.location.reload();
+                } else {
+                    alert("新增失敗")
+                }
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+    }
+
+    function cancelAdd() {
+        this.IsClickAdd(false);
+
+        var add = document.getElementById("add");
+        var newsTable = document.getElementById("newsTable");
+
+        add.style.display = "none";
+        newsTable.style.display = "inline-table";
+    }
+
+    function editNews(data) {
+        this.IsEdit(true);
+        this.IsClickEdit(true);
+        this.Item(data);
+
+        var editNewsTitle = document.getElementById("editNewsTitle");
+        editNewsTitle.focus();
+    }
+
+    function updateNews(newsNo, NewsTitle, NewsContent, NewsType) {
+        var newsTitle = document.getElementById(NewsTitle).value;
+        var newsContent = document.getElementById(NewsContent).value;
+        var newsType = document.getElementById(NewsType).value;
+        if (newsTitle.length == 0 || newsContent.length == 0||
+            newsTitle.length > 50 || newsContent.length > 200) {
+            alert("標題與內容不可為空，且標題要在50字內，內容不可超過200字");
+            return false;
+        }
+        this.IsEdit(false);
+        this.IsClickEdit(false);
+        this.Item(newsNo);
+
+        let args = {
+            NewsNo: newsNo,
+            NewsTitle: newsTitle,
+            NewsContent: newsContent,
+            NewsTypeNo: newsType
+        };
+
+        $.ajax({
+            url: '@Url.Action("UpdateNews")',
+            data: args,
+            method: "POST",
+            async: true,
+            success: function (response) {
+                if (response) {
+                    alert("修改成功")
+                    window.location.reload();
+                } else {
+                    alert("修改失敗")
+                }
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+    }
+
+    function cancelEdit(data) {
+        this.IsEdit(false);
+        this.IsClickEdit(false);
+        this.Item(data);
+    }
+
+    function deleteNews(newsNo) {
+        if (window.confirm("是否確定要刪除?")) {
+            this.Item(newsNo);
+
+            let args = {
+                NewsNo: newsNo
+            };
+
+            $.ajax({
+                url: '@Url.Action("DeleteNews")',
+                data: args,
+                method: "POST",
+                async: true,
+                success: function (response) {
+                    if (response) {
+                        alert("刪除成功")
+                        window.location.reload();
+                    } else {
+                        alert("刪除失敗，可能原因：權限不足")
+                    }
+                },
+                error: function (e) {
+                    console.log(e);
+                }
+            });
+        }
+    }
+</script>

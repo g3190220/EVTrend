@@ -1,0 +1,48 @@
+﻿@model AccountModels
+@{
+    ViewData["Title"] = "使用者登入";
+}
+<html>
+<head>
+    <script src="~/js/jqAccountUnit.js"></script>
+</head>
+<body>
+    <h1>@ViewData["Title"]</h1>
+    <div class="container">
+        <div class="row">
+            <form action="/Account/Login" method="POST" id="loginform" name="loginform" onclick="return false">
+                <br>
+                <div class="col-12 form-inline">
+                    <label>帳號：</label>
+                    @if (Model != null)
+                    {
+                        <!--自動帶入帳號-->
+                        <input type="text" class="form-control required" id="Account" name="Account" onblur="AccountCheck();" value="@Model.Account">
+                    }
+                    else
+                    {
+                        <input type="text" class="form-control required" id="Account" name="Account" onblur="AccountCheck();">
+                    }
+                </div>
+                <br>
+                <div class="col-12 form-inline">
+                    <label>密碼：</label>
+                    <input type="password" class="form-control required" id="Password" name="Password">
+                </div>
+                <br>
+                <div class="col-12 form-inline">
+                    <button type="submit" class="btn btn-primary" id="loginbtn">登入</button>                    
+                </div>
+            </form>
+            @* 回應訊息 *@
+            @if (Model != null)
+            {
+                <script type="text/javascript">
+                    var resultMessage = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(@Model.ResultMessage) as String);
+                    alert(resultMessage);
+                </script>
+            }
+        </div>
+    </div>
+</body>
+</html>

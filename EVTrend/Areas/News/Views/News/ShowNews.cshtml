@@ -1,0 +1,67 @@
+﻿@using EVTrend.Areas.News.Models
+@model NewsPageModel;
+@{
+    ViewData["Title"] = "最新消息";
+}
+<html>
+<body>
+    <h1>@ViewData["Title"]</h1>
+    <table class="table" style="text-align: center;">
+        <tr>
+            <th scope="col">消息編號</th>
+            <th scope="col">消息類型</th>
+            <th scope="col">標題</th>
+            <th scope="col">內容</th>
+            <th scope="col">觸及次數</th>
+            <th scope="col">創立時間</th>
+            <th scope="col">修改時間</th>
+        </tr>
+
+        @foreach (var news in Model.News)
+        {
+            <tr>
+                <td class="align-middle">@news.NewsNo</td>
+                <td class="align-middle">@Model.NewsTypesDictionary[@news.NewsTypeNo].TypeName</td>
+                <td class="align-middle"><a href="@news.NewsLink" onclick="addNewsHit('@news.NewsNo', '@news.NewsHits')">@news.NewsTitle</a></td>
+                <td class="align-middle">@news.NewsContent</td>
+                <td class="align-middle">@news.NewsHits</td>
+                <td class="align-middle">@news.CreateTime.ToString("D", new System.Globalization.CultureInfo("zh-TW"))</td>
+                @if (news.ModifyTime.Year == 1)
+                {
+                    <td class="align-middle">N/A</td>
+                }
+                else
+                {
+                    <td class="align-middle">@news.ModifyTime.ToString("D", new System.Globalization.CultureInfo("zh-TW"))</td>
+                }
+            </tr>
+        }
+    </table>
+</body>
+</html>
+<script type="text/javascript">
+    function addNewsHit(newsNo, newsHits) {
+        let args = {
+            NewsNo: newsNo,
+            NewsHits: newsHits
+        };
+
+        $.ajax({
+            url: '@Url.Action("Hit")',
+            data: args,
+            method: "POST",
+            async: true,
+            success: function (response) {
+                if (response) {
+                    //alert("新增成功")
+                    //window.location.reload();
+                } else {
+                    //alert("新增失敗，可能原因：權限不足")
+                }
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+    }
+</script>

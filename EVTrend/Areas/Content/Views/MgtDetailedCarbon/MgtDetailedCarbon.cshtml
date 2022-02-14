@@ -1,0 +1,438 @@
+﻿@using EVTrend.Areas.Content.Models
+@using System.Data
+@{
+    ViewData["Title"] = "細部碳排量管理";
+    ViewData["AddTitle"] = "新增細部碳排量";
+}
+@{
+
+    IEnumerable<MgtDetailedCarbonModel> DetailedCarbons = ViewData["GetMgtDetailedCarbon"] as IEnumerable<MgtDetailedCarbonModel>;
+    IEnumerable<TimeModel> TotalYears = ViewData["GetYear"] as IEnumerable<TimeModel>;
+    IEnumerable<CountryModel> TotalCountrys = ViewData["GetCountry"] as IEnumerable<CountryModel>;
+}
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js"></script>
+</head>
+<body>
+    <div class="container" id="MgtDetailCarbon">
+        <div class="row">
+            <!-- ko ifnot: IsClickAdd() -->
+            <h1>@ViewData["Title"]</h1>
+            <!-- /ko -->
+            <!-- ko if: IsClickAdd() -->
+            <h1 id="title">@ViewData["AddTitle"]</h1>
+            <!-- /ko -->
+            <div class="col-12" style="margin: 10px 0px 10px 0px;">
+                <!-- ko ifnot: IsClickAdd() -->
+                <div class="col-12 form-inline">
+                    <label>年份：</label>
+                    @if (ViewData["SelectYearNo"] != null)
+                    {
+                        <select class="form-control" name="selectCountryNo" id="selectCountryNo" onchange="select(this.value);">
+                            <option value="-1">------</option>
+                            @{ List<TimeModel> SelectCountry = (List<TimeModel>)ViewData["GetYear"];
+                                foreach (var select in SelectCountry)
+                                {
+                                    if (select.YearNo.ToString() == ViewData["SelectYearNo"].ToString())
+                                    {
+                                        <option value=@select.YearNo.ToString() selected>@select.YearName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value=@select.YearNo.ToString()>@select.YearName</option>
+                                    }
+                                }
+                            }
+
+                        </select>
+                    }
+                    else
+                    {
+                        <select class="form-control" name="selectCountryNo" id="selectCountrysNo" onchange="select(this.value);">
+                            <option value="-1" selected>------</option>
+                            @{ List<TimeModel> SelectCountry = (List<TimeModel>)ViewData["GetYear"];
+                                foreach (var select in SelectCountry)
+                                {
+                                    <option value=@select.YearNo.ToString()>@select.YearName</option>
+                                }
+                            }
+
+                        </select>
+                    }
+                </div>
+                <!-- /ko -->
+                <!-- ko ifnot: IsClickAdd() -->
+                <div>
+                    <button type="button" class="btn btn-primary" onclick="add()">新增</button>
+                </div>
+                <!-- /ko -->
+            </div>
+            <div class="col-12" id="add" name="add" style="display: none;">
+                <form method="POST" id="addform" name="addform">
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label class="ye">年份：</label>
+                        <select class="form-control required" id="addYear" name="addYear">
+                            @foreach (var item in TotalYears)
+                            {
+                                <option value="@item.YearNo">@item.YearName</option>
+                            }
+                        </select>
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>國家：</label>
+                        <select class="form-control required" id="addCountry" name="addCountry" onchange="showCountryCarsType()">
+                            <option value="-1">請先選擇國家</option>
+                            @foreach (var item in TotalCountrys)
+                            {
+                                <option value="@item.CountryNo">@item.CountryName</option>
+                            }
+                        </select>
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline" id="second-select" style="display: none;">
+                        <label>車種：</label>
+                        <select class="form-control required" id="addCountryCarsTypeNo" name="addCountryCarsTypeNo"></select>
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline" id="third-select" style="display: none;">
+                        <label>碳排量：</label>
+                        <input type="number" class="form-control required" id="addCarbonNumber" name="addCarbonNumber" />
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <button type="submit" class="btn btn-success" onclick="addCarbon('addYear','addCountry','addCountryCarsTypeNo','addCarbonNumber'); return false;">確認</button>
+                        <span>&nbsp;&nbsp;</span>
+                        <button type="button" class="btn btn-secondary" onclick="cancelAdd()">取消</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-12">
+                <table class="table" id="DetailCarbonTable" name="DetailCarbonTable" style="text-align: center;">
+                    <thead>
+                        <tr>
+
+                            <th scope="col">年份</th>
+                            <th scope="col">國家</th>
+                            <th scope="col">車種</th>
+                            <th scope="col">碳排量</th>
+                            <th scope="col">建立時間</th>
+                            <th scope="col">修改時間</th>
+                            <th scope="col">執行動作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (MgtDetailedCarbonModel item in DetailedCarbons)
+                        {
+                            <tr>
+                                <!-- ko ifnot: IsEdit() && Item() == @item.CarbonNo -->
+
+                                <td class="align-middle">@item.YearName</td>
+                                <td class="align-middle">@item.CountryName</td>
+                                <td class="align-middle">@item.CarsTypeName</td>
+                                <td class="align-middle">@item.CarbonNumber</td>
+                                <td class="align-middle">@item.CarbonCreateTime</td>
+                                <td class="align-middle">@item.CarbonModifyTime</td>
+                                <td class="align-middle">
+                                    <!-- ko if: IsClickEdit() && Item() != @item.CarbonNo -->
+                                    <button type="button" class="btn btn-primary" disabled="disabled">修改</button>
+
+                                    <button type="button" class="btn btn-danger" disabled="disabled">刪除</button>
+                                    <!-- /ko -->
+                                    <!-- ko ifnot: IsClickEdit() -->
+                                    <button type="button" class="btn btn-primary" id="Edit" onclick="editCarbon('@item.CarbonNo')">修改</button>
+                                    <span>&nbsp;&nbsp;</span>
+                                    <button type="button" class="btn btn-danger" onclick="deleteSubmit('@item.CarbonNo')">刪除</button>
+                                    <!-- /ko -->
+                                </td>
+                                <!-- /ko -->
+                            </tr>
+                            <tr>
+                                <!-- ko if: IsEdit() && Item() == @item.CarbonNo -->
+                                
+                                <td class="align-middle">@item.YearName</td>
+                                <td class="align-middle">@item.CountryName</td>
+                                <td class="align-middle">@item.CarsTypeName</td>
+                                <td class="align-middle">
+                                    <input type="number" class="form-control" id="editCarbonNumber" name="editCarbonNumber" value="@item.CarbonNumber">
+                                </td>
+                                <td class="align-middle">@item.CarbonCreateTime</td>
+                                <td class="align-middle">@item.CarbonModifyTime</td>
+                                <td class="align-middle">
+                                    <button type="button" class="btn btn-success" onclick="saveCarbon(@item.CarbonNo, 'editCarbonNumber')">確認</button>
+                                    <button type="button" class="btn btn-secondary" onclick="cancelEdit(@item.CarbonNo)">取消</button>
+                                </td>
+                                <!-- /ko -->
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+<script type="text/javascript">
+
+    this.IsClickAdd = ko.observable(false);
+    this.IsEdit = ko.observable(false);
+    this.IsClickEdit = ko.observable(false);
+    this.Item = ko.observable(0);
+    ko.applyBindings($("#MgtDetailCarbon").get(0));
+
+    function select(data) {
+        let args = {
+            CountryNo: data
+        };
+        $.ajax({
+            url: '@Url.Action("SelectCountryNo")',
+            data: args,
+            method: "POST",
+            async: true,
+            success: function (response) {
+                if (response) {
+                    if (data != null && data != "-1") {
+                        window.location.href = window.location.href.split('?')[0] + "?YearNo=" + data;
+                    }
+                    else {
+                        window.location.href = window.location.href.split('?')[0];
+                    }
+                } else {
+                    window.location.href = window.location.href.split('?')[0] + "?YearNo=" + data;
+                    alert("查無資料");
+                }
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+    }
+    //顯示該國擁有的車種，供使用者選擇
+    function showCountryCarsType() {
+        var CountryNo = document.getElementById("addCountry").value;
+        $.ajax({
+            type: "POST",
+            url: "MgtDetailedCarbon/GetCountryCarsType",
+            data: {
+                "CountryNo": CountryNo,
+            },
+            async: true,
+            beforeSend: function () {
+
+            },
+            success: function (result) {
+                //顯示div
+                $("#second-select").show()
+                var addCountryCarsType = $("#addCountryCarsTypeNo")
+
+                //清空select
+                addCountryCarsType.empty()
+
+                //塞 select option 的資料
+                $.each(result, function (key, value) {
+                    addCountryCarsType
+                        .append($("<option></option>")
+                            .attr("value", value.carbonCountryCarsTypeNo)
+                            .text(value.carsTypeName));
+                });
+                $("#third-select").show()
+
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+
+
+
+    }
+
+    //新增
+    function add() {
+        this.IsClickAdd(true);
+
+        var add = document.getElementById("add");
+        var DetailCarbonTable = document.getElementById("DetailCarbonTable");
+
+        add.style.display = "block";
+        DetailCarbonTable.style.display = "none";
+    }
+
+    //儲存新增
+    function addCarbon(addYear, addCountry, addCountryCarsTypeNo, addCarbonNumber) {
+        var YearNo = document.getElementById(addYear).value;
+        var CountryNo = document.getElementById(addCountry).value;
+        var CountryCarsTypeNo = document.getElementById(addCountryCarsTypeNo).value;
+        var CarbonNumber = document.getElementById(addCarbonNumber).value;
+
+        //數字限制條件 驗證非負浮點數（正浮點數   0）
+        var NumberReg = /^[+]{0,1}(\d+)$|^[+]{0,1}(\d+\.\d+)$/;
+
+        //輸入檢查
+        if (YearNo == "" || CountryNo == -1) {
+            alert("請選擇確切的年份和國家！");
+            return false
+        }
+        else if (CountryCarsTypeNo == "") {
+            alert("請選擇確切的車種！");
+            return false
+        }
+        else if (!NumberReg.test(CarbonNumber) || CarbonNumber == "") {
+            alert("請輸入正確碳排量！ (非負數字)");
+            document.getElementById(addCarbonNumber).focus();
+            return false
+        }
+
+
+        $.ajax({
+            type: "POST",
+            url: "MgtDetailedCarbon/InsertDetailedCarbon",
+            data: {
+                "CarbonCountryCarsTypeNo": CountryCarsTypeNo,
+                "CarbonYear": YearNo,
+                "CarbonNumber": CarbonNumber
+            },
+            async: true,
+            beforeSend: function () {
+
+            },
+            success: function (result) {
+                //console.log(data);
+                if (result == true) {
+                    //searchSubmit();
+                    alert("新增成功")
+                    window.location.reload();
+                    //$("#msg").text("新增成功");
+                } else {
+                    alert("新增失敗!! 可能失敗原因：資料已存在、權限不足")
+                    //location.reload();
+                    //$("#msg").text("新增失敗!! 可能失敗原因：輸入錯誤(須為整數且不為負)、資料已存在、權限不足");
+                }
+
+
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+
+    }
+
+    //取消新增
+    function cancelAdd() {
+        this.IsClickAdd(false);
+
+        var add = document.getElementById("add");
+        var DetailCarbonTable = document.getElementById("DetailCarbonTable");
+
+        add.style.display = "none";
+        DetailCarbonTable.style.display = "inline-table";
+    }
+
+    //修改
+    function editCarbon(data) {
+        this.IsEdit(true);
+        this.IsClickEdit(true);
+        this.Item(data);
+
+        var CarbonNumber = document.getElementById("editCarbonNumber");
+        CarbonNumber.focus();
+    }
+
+    //取消修改
+    function cancelEdit(data) {
+        this.IsEdit(false);
+        this.IsClickEdit(false);
+        this.Item(data);
+    }
+
+    //儲存修改
+    function saveCarbon(id, editCarbonNumber) {
+        var CarbonNumber = document.getElementById(editCarbonNumber).value;
+
+        //數字限制條件 驗證非負浮點數（正浮點數   0）
+        var NumberReg = /^[+]{0,1}(\d+)$|^[+]{0,1}(\d+\.\d+)$/;
+
+        //輸入檢查
+        if (!NumberReg.test(CarbonNumber)) {
+            alert("請輸入正確碳排量！ (非負數字)");
+            document.getElementById(editCarbonNumber).focus();
+            return false;
+        }
+
+        this.IsEdit(false);
+        this.IsClickEdit(false);
+        this.Item(id);
+
+        $.ajax({
+            type: "POST",
+            url: "MgtDetailedCarbon/UpdateDetailedCarbon",
+            data: {
+                "CarbonNumber": CarbonNumber,
+                "CarbonNo": id,
+            },
+            async: true,
+            beforeSend: function () {
+
+            },
+            success: function (result) {
+                //console.log(data);
+                if (result == true) {
+                    //searchSubmit();
+                    alert("修改成功")
+                    window.location.reload();
+                    //$("#msg").text("新增成功");
+                } else {
+                    alert("修改失敗，可能原因：權限不足")
+                    //location.reload();
+                    //$("#msg").text("新增失敗!! 可能失敗原因：輸入錯誤(須為整數且不為負)、資料已存在、權限不足");
+                }
+
+
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+
+
+    }
+
+    //刪除功能
+    function deleteSubmit(id) {
+        //視窗提示
+        if (window.confirm("是否確定要刪除?")) {
+            $.ajax({
+                type: "POST",
+                url: "MgtDetailedCarbon/DeleteTotalCarbon",
+                data: {
+                    "CarbonNo": id,
+                },
+                async: true,
+                beforeSend: function () {
+
+                },
+                success: function (result) {
+                    //console.log(data);
+                    if (result == true) {
+                        alert("刪除成功");
+                        location.reload();
+                        //$("#msg").text("新增成功");
+                    } else {
+                        alert("刪除失敗!! 可能失敗原因：權限不足");
+                        location.reload();
+                        //$("#msg").text("新增失敗!! 可能失敗原因：輸入錯誤(須為整數且不為負)、資料已存在、權限不足");
+                    }
+
+
+                },
+                error: function (e) {
+                    console.log(e);
+                }
+            });
+        }
+    }
+</script>

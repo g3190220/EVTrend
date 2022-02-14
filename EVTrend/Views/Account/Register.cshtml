@@ -1,0 +1,66 @@
+﻿@model Member
+@{
+    ViewData["Title"] = "註冊會員";
+}
+<html>
+<head>
+    <script src="~/js/jqAccountUnit.js"></script>
+</head>
+<body>
+    <h1>@ViewData["Title"]</h1>
+    <div class="container">
+        <div class="row">
+            <form action="/Account/Register" method="POST" id="signupform" name="signupform">
+                <br>
+                <div class="col-12 form-inline">
+                    <label>帳號：</label>
+                    <input type="text" class="form-control required" id="Account" name="Account" onblur="CheckDuplicateAccount();">
+                </div>
+                <br>
+                <div class="col-12 form-inline">
+                    <label>密碼：</label>
+                    <input type="password" class="form-control required" id="Password" name="Password">
+                </div>
+                <br>
+                <div class="col-12 form-inline">
+                    <label>再次確認密碼：</label>
+                    <input type="password" class="form-control required" id="PasswordCheck" name="PasswordCheck">
+                </div>
+                <br>
+                <div class="col-12 form-inline">
+                    <label>暱稱：</label>
+                    <input type="text" class="form-control required" id="Username" name="Username">
+                </div>
+                <br>
+                <div class="col-12 form-inline">
+                    <label>性別：</label>
+                    <select class="form-control required" id=Gender name="Gender">
+                        <option value="0" selected>------</option>
+                        <option value="1">男</option>
+                        <option value="2">女</option>
+                        <option value="3">不願透漏</option>
+                    </select>
+                </div>
+                <br>
+                <div class="col-12 form-inline">
+                    <label>生日：</label>
+                    <input type="date" class="form-control required" id="Birthday" name="Birthday" onchange="BirthdayCheck()">
+                </div>
+                <br>
+                <div class="col-12 form-inline">
+                    <button type="submit" class="btn btn-primary" id="register" onclick="return false;">註冊</button>
+                </div>
+            </form>
+            @* 回應訊息 *@
+            @if (Model != null)
+            {
+                <script type="text/javascript">
+                    var resultMessage = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(@Model.ResultMessage) as String);
+                    alert(resultMessage);
+                    document.location.href = "/Account/Login/";
+                </script>
+            }
+        </div>
+    </div>
+</body>
+</html>

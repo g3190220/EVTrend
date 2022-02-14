@@ -1,0 +1,340 @@
+﻿@using EVTrend.Areas.Content.Models
+@using System.Data
+<style>
+    .aa {
+        background-color: black;
+        border-radius: 1rem;
+        border: none;
+        padding: 0.3rem 0.5rem;
+        color: white;
+    }
+
+    div.title {
+        display: flex;
+        flex-direction: row;
+        justify-content: center
+    }
+
+    
+</style>
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js">
+</script>
+
+<script>
+    $(document).ready(function () {
+        $("#flip").click(function () {
+            $("#panel").slideToggle("speed");
+        });
+    });
+    $(document).ready(function () {
+        $("#flip2").click(function () {
+            $("#panel2").slideToggle("speed");
+        });
+    });
+</script>
+
+<style type="text/css">
+
+    #panel {
+
+        display: none;
+    }
+    #panel2 {
+        display: none;
+    }
+</style>
+
+
+@{
+    ViewData["Title"] = "總體碳排量與電動車數據";
+}
+@{
+
+    IEnumerable<TotalElecModel> TotalElecs = ViewData["TotalElec"] as IEnumerable<TotalElecModel>;
+    IEnumerable<TotalCarbonModel> TotalCarbons = ViewData["TotalCarbon"] as IEnumerable<TotalCarbonModel>;
+}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<br />
+<br />
+<div class="title">
+
+    <h1>@ViewData["Title"]</h1>
+</div>
+<br />
+<br />
+
+
+<div id="chart">
+
+</div>
+
+<button class="aa" id="flip">顯示詳細資訊</button>
+
+<br />
+<br />
+<br />
+
+<div id="panel" class="col-12">
+    <table class="table table-hover" style="text-align: center;">
+        <thead>
+            <tr>
+                <th scope="col">年份</th>
+                <th scope="col">國家</th>
+                <th scope="col">運輸業碳排量(單位：千公噸)</th>
+                <th scope="col">總體碳排量(單位：千公噸)</th>
+                <th scope="col">比例(單位：%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (TotalCarbonModel TotalCarbon in TotalCarbons)
+            {
+                <tr>
+                    <td class="align-middle">@TotalCarbon.Year</td>
+                    <td class="align-middle">@TotalCarbon.Country</td>
+                    <td class="align-middle">@TotalCarbon.T_CarbonNumber</td>
+                    <td class="align-middle">@TotalCarbon.TotalCarbonNumber</td>
+                    <td class="align-middle">@TotalCarbon.Percentage</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    </div>
+
+    <br />
+    <br />
+    <br />
+    <div id="chart1">
+
+    </div>
+
+    <button class="aa" id="flip2">顯示詳細資訊</button>
+    <br />
+    <br />
+    <br />
+    <div id="panel2" class="col-12">
+        <table class="table table-hover" style="text-align: center;">
+            <thead>
+                <tr>
+                    <th scope="col">年份</th>
+                    <th scope="col">國家</th>
+                    <th scope="col">電動車領牌數</th>
+                    <th scope="col">全部車種領牌數</th>
+                    <th scope="col">比例(單位：‰)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (TotalElecModel TotalElec in TotalElecs)
+                {
+                    <tr>
+                        <td class="align-middle">@TotalElec.Year</td>
+                        <td class="align-middle">@TotalElec.Country</td>
+                        <td class="align-middle">@TotalElec.ElecRegisterNumber</td>
+                        <td class="align-middle">@TotalElec.TotalRegisterNumber</td>
+                        <td class="align-middle">@TotalElec.Percentage</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        </div>
+
+
+        <script type="text/javascript">
+
+            //取得Carbon繪圖資料
+            function getCarbonData() {
+                $.ajax({
+                    type: "GET",
+                    url: "TotalElecCarbon/GetDraw",
+                    contentType: 'application/json',
+                    async: true,
+                    beforeSend: function () {
+
+                    },
+                    success: function (result) {
+                        console.log(result);
+                        var options = {
+                            series: [
+                                {
+                                    name: "運輸業碳排比例/總碳排(美國)",
+                                    //data: carbon_data.A_percentage_arr
+                                    data: result.a_carbon_percentage
+                                },
+                                {
+                                    name: "運輸業碳排比例/總碳排(台灣)",
+                                    //data: carbon_data.T_percentage_arr
+                                    data: result.t_carbon_percentage
+                                },
+                            ],
+                            chart: {
+                                height: 350,
+                                type: 'line',
+                                dropShadow: {
+                                    enabled: true,
+                                    color: '#000',
+                                    top: 18,
+                                    left: 7,
+                                    blur: 10,
+                                    opacity: 0.2
+                                },
+                                zoom: {
+                                    enabled: false
+                                },
+                                toolbar: {
+                                    offsetX: 20,
+                                    offsetY: 15,
+                                }
+
+                            },
+                            colors: ['#77B6EA', '#545454'],
+                            dataLabels: {
+                                enabled: true,
+                                formatter: function (val) {
+                                    if (val != null) {
+                                        return val.toFixed(2)
+                                    }
+                                    
+                                },
+                                offsetY: -3,
+                            },
+                            stroke: {
+                                curve: 'smooth'
+                            },
+                            title: {
+                                text: '台灣美國碳排量比較',
+                                align: 'left'
+                            },
+                            grid: {
+                                borderColor: '#e7e7e7',
+                                row: {
+                                    colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+                                    opacity: 0.5
+                                },
+                            },
+                            markers: {
+                                size: 1
+                            },
+                            xaxis: {
+                                categories: result.carbon_year,
+                            },
+                            yaxis: {
+                                title: {
+                                    text: '比例 (單位：‰)',
+                                },
+                                min: 0,
+                                max: 45,
+                                decimalsInFloat: 2
+                            },
+                            legend: {
+                                position: 'top',
+                                horizontalAlign: 'right',
+                                floating: true,
+                                offsetY: -25,
+                                offsetX: -5
+                            }
+                           
+                        };
+                        var options1 = {
+                            series: [
+                                {
+                                    name: "電動車領牌數/總領牌數(美國)",
+                                    data: result.a_elec_percentage
+                                },
+                                {
+                                    name: "電動車領牌數/總領牌數(台灣)",
+                                    data: result.t_elec_percentage
+                                    
+                                },
+                            ],
+                            chart: {
+                                height: 350,
+                                type: 'line',
+                                dropShadow: {
+                                    enabled: true,
+                                    color: '#000',
+                                    top: 18,
+                                    left: 7,
+                                    blur: 10,
+                                    opacity: 0.2
+                                },
+                                zoom: {
+                                    enabled: false
+                                },
+                                toolbar: {
+                                    offsetX: 20,
+                                    offsetY: 15,
+                                }
+                            },
+                            colors: ['#77B6EA', '#545454'],
+                            dataLabels: {
+                                enabled: true,
+                                formatter: function (val) {
+                                    if (val != null) {
+                                        return val.toFixed(2)
+                                    }
+                                   
+                                },
+                                offsetY: -3,
+                            },
+                            stroke: {
+                                curve: 'smooth'
+                            },
+
+                            title: {
+                                text: '台灣美國領牌數比較',
+                                align: 'left'
+                            },
+                            grid: {
+                                borderColor: '#e7e7e7',
+                                row: {
+                                    colors: ['#f3f3f3', 'transparent'],
+                                    opacity: 0.5
+                                },
+                            },
+                            markers: {
+                                size: 1
+                            },
+                            xaxis: {
+                                categories: result.elec_year,
+                            },
+                            yaxis: {
+                                title: {
+                                    text: '比例 (單位：‰)'
+                                },
+                                min: 0,
+                                max: 80,
+                                decimalsInFloat: 2
+                            },
+                            legend: {
+                                position: 'top',
+                                horizontalAlign: 'right',
+                                floating: true,
+                                offsetY: -25,
+                                offsetX: -5
+                            }
+                        };
+
+
+                        var chart = new ApexCharts(document.querySelector("#chart"), options);
+                        chart.render();
+                        var chart1 = new ApexCharts(document.querySelector("#chart1"), options1);
+                        chart1.render();
+                        
+
+                    },
+                    error: function (e) {
+                        console.log(e);
+                    }
+                });
+        
+                
+            }
+
+            //執行
+            this.getCarbonData()
+           
+
+        </script>
+
+
+

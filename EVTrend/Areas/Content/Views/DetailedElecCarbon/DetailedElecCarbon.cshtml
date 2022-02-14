@@ -1,0 +1,179 @@
+﻿@{
+    ViewData["Title"] = "細部碳排量與電動車數據";
+}
+<h1>@ViewData["Title"]</h1>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<div class="col-2">
+    <select class="form-control" id="car_type" onchange="load_data(this)">
+        <option>請選擇...</option>
+        <option value="大客車">大客車</option>
+        <option value="大貨車">大貨車</option>
+        <option value="小客車">小客車</option>
+        <option value="小貨車">小貨車</option>
+        <option value="機車">機車</option>
+    </select>
+</div>
+<div id="chart"></div>
+
+<script>
+    //var is_frist = true
+    function load_data(sel) {
+
+
+        // get html element
+        var car_type = document.getElementById("car_type");
+        var chart = document.getElementById("chart");
+        //alert(car_type.value);
+
+        // refresh chart
+        //chart.innerHTML = "<p></p>"
+        $("#chart").empty();
+        // at frist time, remove useless option
+        //if (is_frist == true) {
+        //    car_type.remove(0);
+        //    is_frist = false;
+        //}
+        var title_name = sel.options[sel.selectedIndex].text + "年度統計";
+        // call backend get data here
+        $.ajax({
+            url: "@Url.Action("GetDraw", "DetailedElecCarbon")",
+            method: "get",
+            contentType: 'application/json',
+            data: { "car_type_id": car_type.value},
+            success: function (mydata) {
+                console.log(mydata)
+                var options = {
+                    series: [{
+                        name: '總領牌數',
+                        type: 'column',
+                        data: mydata.total_car
+                    }, {
+                        name: '電動領牌數',
+                        type: 'column',
+                        data: mydata.elec_car
+                    }, {
+                        name: '碳排量(千公噸)',
+                        type: 'line',
+                        data: mydata.carbon
+                    }],
+                    chart: {
+                        height: 350,
+                        type: 'line',
+                        stacked: false,
+                        toolbar: {
+                            show: true,
+                            tools: {
+                                download: true,
+                                selection: true,
+                                zoom: false,
+                                zoomin: true,
+                                zoomout: true,
+                                pan: false,
+                                //reset: false
+
+                            },
+                        },
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        width: [1, 1, 4]
+                    },
+                    title: {
+                        text: title_name,
+                        align: 'left',
+                        offsetX: 200
+                    },
+                    xaxis: {
+                        categories: mydata.year,
+                    },
+                    yaxis: [
+                        {
+                            axisTicks: {
+                                show: true,
+                            },
+                            axisBorder: {
+                                show: true,
+                                color: '#008FFB'
+                            },
+                            labels: {
+                                style: {
+                                    colors: '#008FFB',
+                                }
+                            },
+                            title: {
+                                text: "總領牌數",
+                                style: {
+                                    color: '#008FFB',
+                                }
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        },
+                        {
+                            seriesName: '總領牌數',
+                            opposite: true,
+                            axisTicks: {
+                                show: true,
+                            },
+                            axisBorder: {
+                                show: true,
+                                color: '#00E396'
+                            },
+                            labels: {
+                                style: {
+                                    colors: '#00E396',
+                                }
+                            },
+                            title: {
+                                text: "電動領牌數",
+                                style: {
+                                    color: '#00E396',
+                                }
+                            },
+                        },
+                        {
+                            seriesName: '碳排量(千公噸)',
+                            opposite: true,
+                            axisTicks: {
+                                show: true,
+                            },
+                            axisBorder: {
+                                show: true,
+                                color: '#FEB019'
+                            },
+                            labels: {
+                                style: {
+                                    colors: '#FEB019',
+                                },
+                            },
+                            title: {
+                                text: "碳排量(千公噸)",
+                                style: {
+                                    color: '#FEB019',
+                                }
+                            }
+                        },
+                    ],
+                    tooltip: {
+                        fixed: {
+                            enabled: true,
+                            position: 'topLeft', // topRight, topLeft, bottomRight, bottomLeft
+                            offsetY: 30,
+                            offsetX: 60
+                        },
+                    },
+                    legend: {
+                        horizontalAlign: 'left',
+                        offsetX: 40
+                    },
+
+                };
+                var chart = new ApexCharts(document.querySelector("#chart"), options);
+                chart.render();
+            }
+        });
+    }
+</script>

@@ -1,0 +1,735 @@
+﻿@using EVTrend.Areas.Member.Models
+@{
+    ViewData["MgtTitle"] = "使用者管理";
+    ViewData["AddTitle"] = "新增使用者";
+}
+@{
+    IEnumerable<MemberModels> member = ViewData["Member"] as IEnumerable<MemberModels>;
+}
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js"></script>
+</head>
+<body>
+    <div class="container" id="MgtMember">
+        <div class="row">
+            <!-- ko ifnot: IsClickAdd() -->
+            <h1 id="title">@ViewData["MgtTitle"]</h1>
+            <!-- /ko -->
+            <!-- ko if: IsClickAdd() -->
+            <h1 id="title">@ViewData["AddTitle"]</h1>
+            <!-- /ko -->
+            <div class="col-12" style="margin: 10px 0px 10px 0px;">
+                <!-- ko ifnot: IsClickAdd() -->
+                <div class="col-12 form-inline">
+                    <label>身分類型：</label>
+                    @if (ViewData["SelectStatusNo"] != null)
+                    {
+                        <select class="form-control" name="selectStatusNo" id="selectStatusNo" onchange="select(this.value);">
+                            <option value="-1">------</option>
+                            @{ List<StatusModels> SelectStatus = (List<StatusModels>)ViewData["Status"];
+                                foreach (var select in SelectStatus)
+                                {
+                                    if (select.StatusNo == ViewData["SelectStatusNo"].ToString())
+                                    {
+                                        <option value=@select.StatusNo selected>@select.StatusName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value=@select.StatusNo>@select.StatusName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    }
+                    else
+                    {
+                        <select class="form-control" name="selectStatusNo" id="selectStatusNo" onchange="select(this.value);">
+                            <option value="-1" selected>------</option>
+                            @{ List<StatusModels> SelectStatus = (List<StatusModels>)ViewData["Status"];
+                                foreach (var select in SelectStatus)
+                                {
+                                    <option value=@select.StatusNo>@select.StatusName</option>
+                                }
+                            }
+                        </select>
+                    }
+                    <button type="button" class="btn btn-primary" onclick="add()" style="margin: 0px 0px 0px 20px;">新增</button>
+                </div>
+                <!-- /ko -->
+            </div>
+            <div class="col-12" id="add" name="add" style="display: none;">
+                <form method="POST" id="addform" name="addform">
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>帳號：</label>
+                        <input type="text" class="form-control required" id="addAccount" name="addAccount" onblur="CheckDuplicateAccount();">
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>密碼：</label>
+                        <input type="password" class="form-control required" id="addPassword" name="addPassword">
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>再次確認密碼：</label>
+                        <input type="password" class="form-control required" id="addPasswordCheck" name="addPasswordCheck">
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>暱稱：</label>
+                        <input type="text" class="form-control required" id="addUsername" name="addUsername">
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>性別：</label>
+                        <select class="form-control required" id="addGender" name="addGender">
+                            <option value="0" selected>------</option>
+                            <option value="1">男</option>
+                            <option value="2">女</option>
+                            <option value="3">不願透漏</option>
+                        </select>
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>生日：</label>
+                        <input type="date" class="form-control required" id="addBirthday" name="addBirthday" onchange="BirthdayCheck()">
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>身分類型：</label>
+                        <select class="form-control required" name="addStatusNo" id="addStatusNo">
+                            @{ List<StatusModels> AddStatus = (List<StatusModels>)ViewData["Status"];
+                                <option value="-1" selected>------</option>
+                                foreach (var add in AddStatus)
+                                {
+                                    <option value=@add.StatusNo>@add.StatusName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <button type="submit" class="btn btn-success" onclick="addMember('addUsername', 'addPassword', 'addGender', 'addBirthday', 'addStatusNo'); return false;">確認</button>
+                        <span>&nbsp;&nbsp;</span>
+                        <button type="button" class="btn btn-secondary" onclick="cancelAdd()">取消</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-12">
+                <table class="table" id="memberTable" name="memberTable" style="text-align: center;">
+                    <thead>
+                        <tr>
+                            <th scope="col">帳號</th>
+                            <th scope="col">暱稱</th>
+                            <th scope="col">性別</th>
+                            <th scope="col">生日</th>
+                            <th scope="col">身分類型</th>
+                            <th scope="col">創建時間</th>
+                            <th scope="col">修改時間</th>
+                            <th scope="col">執行動作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (MemberModels item in member)
+                        {
+                            <tr>
+                                <!-- ko ifnot: IsEdit() && Item() == @item.MemberNo -->
+                                <td class="align-middle">@item.Account</td>
+                                <td class="align-middle">@item.Username</td>
+                                <td class="align-middle">
+                                    <!-- ko if: @item.Gender == 1 -->
+                                    <span>男</span>
+                                    <!-- /ko -->
+                                    <!-- ko if: @item.Gender == 2 -->
+                                    <span>女</span>
+                                    <!-- /ko -->
+                                    <!-- ko if: @item.Gender == 3 -->
+                                    <span>不願透露</span>
+                                    <!-- /ko -->
+                                </td>
+                                <td class="align-middle">@item.Birthday.ToString("D", new System.Globalization.CultureInfo("zh-TW"))</td>
+                                <td class="align-middle">@item.StatusName</td>
+                                <td class="align-middle">
+                                    <span>@item.CreateTime.ToString("yyyy/MM/dd")</span>
+                                    <br>
+                                    <span>@item.CreateTime.ToString("HH:mm")</span>
+                                </td>
+                                @if (item.ModifyTime == null)
+                                {
+                                    <td class="align-middle">N/A</td>
+                                }
+                                else
+                                {
+                                    <td class="align-middle">
+                                        <span>@item.ModifyTime.Value.ToString("yyyy/MM/dd")</span>
+                                        <br>
+                                        <span>@item.ModifyTime.Value.ToString("HH:mm")</span>
+                                    </td>
+                                }
+                                <td class="align-middle">
+                                    <!-- ko if: IsClickEdit() && Item() != @item.MemberNo -->
+                                    <button type="button" class="btn btn-primary" disabled="disabled">修改</button>
+                                    <span>&nbsp;&nbsp;</span>
+                                    <button type="button" class="btn btn-danger" disabled="disabled">刪除</button>
+                                    <!-- /ko -->
+                                    <!-- ko ifnot: IsClickEdit() -->
+                                    <button type="button" class="btn btn-primary" id="Edit" onclick="editMember('@item.MemberNo')">修改</button>
+                                    <span>&nbsp;&nbsp;</span>
+                                    <button type="button" class="btn btn-danger" onclick="deleteMember('@item.MemberNo')">刪除</button>
+                                    <!-- /ko -->
+                                </td>
+                                <!-- /ko -->
+                            </tr>
+                            <tr>
+                                <!-- ko if: IsEdit() && Item() == @item.MemberNo -->
+                                <td class="align-middle" id="Account">@item.Account</td>
+                                <td class="align-middle">
+                                    <input type="text" class="form-control" id="Username" name="Username" value="@item.Username" style="width: 105px;">
+                                </td>
+                                <td class="align-middle">
+                                    <select class="form-control" id="Gender" name="Gender">
+                                        <!-- ko if: @item.Gender == 1 -->
+                                        <option value=@item.Gender style="display: none;">男</option>
+                                        <!-- /ko -->
+                                        <!-- ko if: @item.Gender == 2 -->
+                                        <option value=@item.Gender style="display: none;">女</option>
+                                        <!-- /ko -->
+                                        <!-- ko if: @item.Gender == 3 -->
+                                        <option value=@item.Gender style="display: none;">不願透露</option>
+                                        <!-- /ko -->
+                                        <option value="1">男</option>
+                                        <option value="2">女</option>
+                                        <option value="3">不願透漏</option>
+                                    </select>
+                                </td>
+                                <td class="align-middle">
+                                    <input type="date" class="form-control" name="Birthday" id="Birthday" value="@item.Birthday.ToString("yyyy-MM-dd")">
+                                </td>
+                                <td class="align-middle">
+                                    <select class="form-control" name="StatusNo" id="StatusNo">
+                                        @{ List<StatusModels> status = (List<StatusModels>)ViewData["Status"];
+                                            <option value=@item.StatusNo style="display: none;">@item.StatusName</option>
+                                            foreach (var s in status)
+                                            {
+                                                <option value=@s.StatusNo>@s.StatusName</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td class="align-middle">
+                                    <span>@item.CreateTime.ToString("yyyy/MM/dd")</span>
+                                    <br>
+                                    <span>@item.CreateTime.ToString("HH:mm")</span>
+                                </td>
+                                @if (item.ModifyTime == null)
+                                {
+                                    <td class="align-middle">N/A</td>
+                                }
+                                else
+                                {
+                                    <td class="align-middle">
+                                        <span>@item.ModifyTime.Value.ToString("yyyy/MM/dd")</span>
+                                        <br>
+                                        <span>@item.ModifyTime.Value.ToString("HH:mm")</span>
+                                    </td>
+                                }
+                                <td class="align-middle">
+                                    <button type="button" class="btn btn-success" onclick="saveMember(@item.MemberNo, 'Account', 'Username', 'Gender', 'Birthday', 'StatusNo')">確認</button>
+                                    <span>&nbsp;&nbsp;</span>
+                                    <button type="button" class="btn btn-secondary" onclick="cancelEdit(@item.MemberNo)">取消</button>
+                                </td>
+                                <!-- /ko -->
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+    this.IsClickAdd = ko.observable(false);
+    this.IsEdit = ko.observable(false);
+    this.IsClickEdit = ko.observable(false);
+    this.Item = ko.observable(0);
+    ko.applyBindings($("#MgtMember").get(0));
+
+    //篩選身分類型
+    function select(data) {
+        let args = {
+            StatusNo: data
+        };
+
+        $.ajax({
+            url: '@Url.Action("SelectStatusNo")',
+            data: args,
+            method: "POST",
+            async: true,
+            success: function (response) {
+                if (response) {
+                    if (data != null && data != "-1") {
+                        window.location.href = window.location.href.split('?')[0] + "?StatusNo=" + data;
+                    }
+                    else {
+                        window.location.href = window.location.href.split('?')[0];
+                    }
+                } else {
+                    window.location.href = window.location.href.split('?')[0] + "?StatusNo=" + data;
+                    alert("查無資料");
+                }
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+    }
+
+    //新增
+    function add() {
+        this.IsClickAdd(true);
+
+        var add = document.getElementById("add");
+        var memberTable = document.getElementById("memberTable");
+
+        add.style.display = "block";
+        memberTable.style.display = "none";
+    }
+
+    //儲存新增
+    function addMember(addUsername, addPassword, addGender, addBirthday, addStatusNo) {
+        if (AccountCheck() & UsernameCheck() & PasswordCheck() & RepeatPwdCheck() & GenderCheck() & BirthdayCheck() & StatusNoCheck()) {
+            var addUsername = document.getElementById(addUsername).value;
+            var addPassword = document.getElementById(addPassword).value;
+            var addGender = document.getElementById(addGender).value;
+            var addBirthday = document.getElementById(addBirthday).value;
+            var addStatusNo = document.getElementById(addStatusNo).value;
+
+            //帳號 物件
+            var addAccount = $("#addAccount");
+
+            let args = {
+                Account: addAccount.val(),
+                Username: addUsername,
+                Password: addPassword,
+                Gender: addGender,
+                Birthday: addBirthday,
+                StatusNo: addStatusNo
+            };
+
+            //Ajax
+            $.ajax({
+                url: '/Account/Register',
+                data: args,
+                method: "POST",
+                async: true,
+                success: function (response) {
+                    if (response != null) {
+                        alert("新增成功");
+                        window.location.reload();
+                    } else {
+                        alert("新增失敗，可能原因：權限不足");
+                    }
+                },
+                error: function (e) {
+                    console.log(e);
+                }
+            });
+        } else {
+            //錯誤訊息
+            alert("新增使用者資料不符合規定");
+        }
+    }
+
+    //取消新增
+    function cancelAdd() {
+        this.IsClickAdd(false);
+
+        var add = document.getElementById("add");
+        var memberTable = document.getElementById("memberTable");
+
+        add.style.display = "none";
+        memberTable.style.display = "inline-table";
+    }
+
+    //修改
+    function editMember(data) {
+        this.IsEdit(true);
+        this.IsClickEdit(true);
+        this.Item(data);
+
+        var Username = document.getElementById("Username");
+        Username.focus();
+    }
+
+    //儲存修改
+    function saveMember(data, Account, Username, Gender, Birthday, StatusNo) {
+        var account = document.getElementById(Account).value;
+        var username = document.getElementById(Username).value;
+        var gender = document.getElementById(Gender).value;
+        var birthday = document.getElementById(Birthday).value;
+        var statusNo = document.getElementById(StatusNo).value;
+        var today = new Date().toISOString().substring(0, 10);
+
+        if (username.length == 0 || username.length > 20 || username == account) {
+            alert("暱稱不可與帳號相同且要在20字內");
+            document.getElementById(Username).focus();
+            return false;
+        }
+
+        if (birthday < "1900-01-01" || birthday > today) {
+            alert("生日不得小於1900或大於今日");
+            document.getElementById(Birthday).focus();
+            return false;
+        }
+
+        this.IsEdit(false);
+        this.IsClickEdit(false);
+        this.Item(data);
+
+        let args = {
+            MemberNo: data,
+            Username: username,
+            Gender: gender,
+            Birthday: birthday,
+            StatusNo: statusNo
+        };
+
+        //Ajax
+        $.ajax({
+            url: '@Url.Action("UpdateMember")',
+            data: args,
+            method: "POST",
+            async: true,
+            success: function (response) {
+                if (response) {
+                    alert("修改成功");
+                    window.location.reload();
+                } else {
+                    alert("修改失敗，可能原因：權限不足");
+                }
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+    }
+
+    //取消修改
+    function cancelEdit(data) {
+        this.IsEdit(false);
+        this.IsClickEdit(false);
+        this.Item(data);
+    }
+
+    //刪除
+    function deleteMember(data) {
+        //視窗提示
+        if (window.confirm("是否確定要刪除?")) {
+            this.Item(data);
+
+            let args = {
+                MemberNo: data
+            };
+
+            //Ajax
+            $.ajax({
+                url: '@Url.Action("DeleteMember")',
+                data: args,
+                method: "POST",
+                async: true,
+                success: function (response) {
+                    if (response) {
+                        alert("刪除成功");
+                        window.location.reload();
+                    } else {
+                        alert("刪除失敗，可能原因：權限不足");
+                    }
+                },
+                error: function (e) {
+                    console.log(e);
+                }
+            });
+        }
+    }
+
+    //檢查是否有重複帳號
+    function CheckDuplicateAccount() {
+        //錯誤訊息移除
+        $(".accountTip").remove();
+
+        //帳號限制條件
+        var AccountReg = /^[a-zA-Z0-9]{3,50}$/;
+
+        //帳號 物件
+        var addAccount = $("#addAccount");
+
+        //是否為空
+        if (!AccountReg.test(addAccount.val())) {
+            //錯誤訊息
+            var errMsg = "<span class='accountTip' style='margin-left: 10px'><font color=#DC3545 ; font size=2>*請輸入3-50碼的英文字母或數字</font></span>";
+
+            //訊息顯示
+            addAccount.parent().append(errMsg);
+        }
+        else if (AccountReg.test(addAccount.val()) && addAccount.val() != null && addAccount.val() != "") {
+            //Ajax
+            $.ajax({
+                url: '/Account/DuplicateAccountCheck',
+                data: { "Account": addAccount.val() },
+                method: "POST",
+                async: true,
+                success: function (response) {
+                    //是否該帳號已存在
+                    if (response) {
+                        //錯誤訊息
+                        var errMsg = "<span class='accountTip' style='margin-left: 10px'><font color=#DC3545 ; font size=2>*該帳號已存在</font></span>";
+
+                        //顯示錯誤訊息
+                        addAccount.parent().append(errMsg);
+                    }
+                }
+            });
+        }
+    }
+
+    //欄位限制檢查
+    $(":input.required").blur(function () {
+        //密碼
+        if ($(this).is("#addPassword")) {
+            PasswordCheck();
+        }
+
+        //再次確認密碼
+        if ($(this).is("#addPasswordCheck")) {
+            RepeatPwdCheck();
+        }
+
+        //暱稱
+        if ($(this).is("#addUsername")) {
+            UsernameCheck();
+        }
+
+        //性別
+        if ($(this).is("#addGender")) {
+            GenderCheck();
+        }
+
+        //身分類型
+        if ($(this).is("#addStatusNo")) {
+            StatusNoCheck();
+        }
+    })
+
+    //帳號檢測
+    function AccountCheck() {
+        //錯誤訊息移除
+        $(".accountTip").remove();
+
+        //帳號 物件
+        var addAccount = $("#addAccount");
+
+        //條件檢查
+        if (addAccount.val() == "") {
+            //錯誤訊息
+            var errMsg = "<span class='accountTip' style='margin-left: 10px'><font color=#DC3545 ; font size=2>*請輸入3-50碼的英文字母或數字</font></span>";
+
+            //訊息顯示
+            addAccount.parent().append(errMsg);
+
+            //Return 失敗
+            return false;
+        }
+        else {
+            //錯誤訊息移除
+            $(".accountTip").remove();
+
+            //帳號限制條件
+            var AccountReg = /^[a-zA-Z0-9]{3,50}$/;
+
+            if (AccountReg.test(addAccount.val()) && addAccount.val() != null && addAccount.val() != "") {
+                //Ajax
+                $.ajax({
+                    url: '/Account/DuplicateAccountCheck',
+                    data: { "Account": addAccount.val() },
+                    method: "POST",
+                    async: true,
+                    success: function (response) {
+                        //是否該帳號已存在
+                        if (response) {
+                            //錯誤訊息
+                            var errMsg = "<span class='accountTip' style='margin-left: 10px'><font color=#DC3545 ; font size=2>*該帳號已存在</font></span>";
+
+                            //顯示錯誤訊息
+                            addAccount.parent().append(errMsg);
+
+                            //Return 失敗
+                            return false;
+                        }
+                        else {
+                            //Return 成功
+                            return true;
+                        }
+                    }
+                });
+            }
+        }
+        //Return 成功
+        return true;
+    }
+
+    //密碼檢測
+    function PasswordCheck() {
+        //錯誤訊息移除
+        $(".passwordTip").remove();
+
+        //密碼限制條件
+        var PasswordReg = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[~!@@#$%^&*()_ `\-={}:";'<>?,.\/]).{8,40}$/;
+
+        //密碼
+        var addPassword = $("#addPassword");
+
+        //條件檢查
+        if (!PasswordReg.test(addPassword.val())) {
+            //錯誤訊息
+            var errMsg = "<span class='passwordTip' style='margin-left: 10px'><font color=#DC3545 ; font size=2>*請輸入8-40碼的大小寫英文字母、數字及符號</font></span>";
+
+            //顯示錯誤訊息
+            addPassword.parent().append(errMsg);
+
+            //Return 失敗
+            return false;
+        }
+        //Return 成功
+        return true;
+    }
+
+    //再次確認密碼檢測
+    function RepeatPwdCheck() {
+        //移除錯誤訊息
+        $(".repeatpasswordTip").remove();
+
+        //再次確認密碼 物件
+        var addRepeatPwd = $("#addPasswordCheck");
+
+        //條件限制
+        if (addRepeatPwd.val() == "" || addRepeatPwd.val() != $("#addPassword").val()) {
+            //錯誤訊息
+            var errMsg = "<span class='repeatpasswordTip' style='margin-left: 10px'><font color=#DC3545 ; font size=2>*密碼為空或不一致</font></span>";
+
+            //錯誤訊息顯示
+            addRepeatPwd.parent().append(errMsg);
+
+            //Return 失敗
+            return false;
+        }
+        //Return 成功
+        return true;
+    }
+
+    //暱稱檢測
+    function UsernameCheck() {
+        //錯誤訊息移除
+        $(".usernameTip").remove();
+
+        //暱稱 物件
+        var addUsername = $("#addUsername");
+
+        //條件檢查
+        if (addUsername.val() == "" || addUsername.val().length > 20 || addUsername.val() == $("#addAccount").val()) {
+            //錯誤訊息
+            var errMsg = "<span class='usernameTip' style='margin-left: 10px'><font color=#DC3545 ; font size=2>*必須填寫，不可與帳號相同且要在20字內</font></span>";
+
+            //訊息顯示
+            addUsername.parent().append(errMsg);
+
+            //Return 失敗
+            return false;
+        }
+        //Return 成功
+        return true;
+    }
+
+    //性別檢測
+    function GenderCheck() {
+        //錯誤訊息移除
+        $(".genderTip").remove();
+
+        //性別 物件
+        var addGender = $("#addGender");
+
+        //條件限制
+        if (addGender.val() == "0") {
+            //錯誤訊息
+            var errMsg = "<span class='genderTip' style='margin-left: 10px'><font color=#DC3545 ; font size=2>*必須選填</font></span>";
+
+            //錯誤訊息顯示
+            addGender.parent().append(errMsg);
+
+            //Return 失敗
+            return false;
+        }
+        //Return 成功
+        return true;
+    }
+
+    //生日檢測
+    function BirthdayCheck() {
+        //錯誤訊息移除
+        $(".birthdayTip").remove();
+
+        //生日 物件
+        var addBirthday = $("#addBirthday");
+
+        //今日 物件
+        var today = new Date().toISOString().substring(0, 10);
+
+        //條件限制 檢查生日是否小於1900或大於今日
+        if (addBirthday.val() != "" && (addBirthday.val() < "1900-01-01" || addBirthday.val() > today)) {
+            //錯誤訊息
+            var errMsg = "<span class='birthdayTip' style='margin-left: 10px'><font color=#DC3545 ; font size=2>*生日不得小於1900或大於今日</font></span>";
+
+            //錯誤訊息顯示
+            addBirthday.parent().append(errMsg);
+
+            //Return 失敗
+            return false;
+        }
+        else if (addBirthday.val() == "") {
+            //錯誤訊息
+            var errMsg = "<span class='birthdayTip' style='margin-left: 10px'><font color=#DC3545 ; font size=2>*必須選填</font></span>";
+
+            //錯誤訊息顯示
+            addBirthday.parent().append(errMsg);
+
+            //Return 失敗
+            return false;
+        }
+        //Return 成功
+        return true;
+    }
+
+    //身分類型檢測
+    function StatusNoCheck() {
+        //錯誤訊息移除
+        $(".statusNoTip").remove();
+
+        //身分類型 物件
+        var addStatusNo = $("#addStatusNo");
+
+        //條件限制
+        if (addStatusNo.val() == "-1") {
+            //錯誤訊息
+            var errMsg = "<span class='statusNoTip' style='margin-left: 10px'><font color=#DC3545 ; font size=2>*必須選填</font></span>";
+
+            //錯誤訊息顯示
+            addStatusNo.parent().append(errMsg);
+
+            //Return 失敗
+            return false;
+        }
+        //Return 成功
+        return true;
+    }
+</script>

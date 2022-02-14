@@ -1,0 +1,415 @@
+﻿@using EVTrend.Areas.Content.Models
+@using System.Data
+@{
+    ViewData["MgtTitle"] = "總體電動車管理";
+    ViewData["AddTitle"] = "新增總體電動車";
+}
+@{
+
+    IEnumerable<MgtTotalElecModel> TotalElecs = ViewData["GetTotalElec"] as IEnumerable<MgtTotalElecModel>;
+    IEnumerable<TimeModel> TotalYears = ViewData["GetYear"] as IEnumerable<TimeModel>;
+    IEnumerable<CountryModel> TotalCountry = ViewData["GetCountry"] as IEnumerable<CountryModel>;
+}
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js"></script>
+</head>
+<body>
+    <div class="container" id="MgtTotalElec">
+        <div class="row">
+            <!-- ko ifnot: IsClickAdd() -->
+            <h1 id="title">@ViewData["MgtTitle"]</h1>
+            <!-- /ko -->
+            <!-- ko if: IsClickAdd() -->
+            <h1 id="title">@ViewData["AddTitle"]</h1>
+            <!-- /ko -->
+            <div class="col-12" style="margin: 10px 0px 10px 0px;">
+                <!-- 選擇國家 -->
+                <!-- ko ifnot: IsClickAdd() -->
+                <div class="col-12 form-inline">
+                    <label>國家：</label>
+                    @if (ViewData["SelectCountryNo"] != null)
+                    {
+                        <select class="form-control" name="selectCountryNo" id="selectCountryNo" onchange="select(this.value);">
+                            <option value="-1">------</option>
+                            @{ List<CountryModel> SelectCountry = (List<CountryModel>)ViewData["GetCountry"];
+                                foreach (var select in SelectCountry)
+                                {
+                                    if (select.CountryNo.ToString() == ViewData["SelectCountryNo"].ToString())
+                                    {
+                                        <option value=@select.CountryNo.ToString() selected>@select.CountryName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value=@select.CountryNo.ToString()>@select.CountryName</option>
+                                    }
+                                }
+                            }
+
+                        </select>
+                    }
+                    else
+                    {
+                        <select class="form-control" name="selectCountryNo" id="selectCountrysNo" onchange="select(this.value);">
+                            <option value="-1" selected>------</option>
+                            @{ List<CountryModel> SelectCountry = (List<CountryModel>)ViewData["GetCountry"];
+                                foreach (var select in SelectCountry)
+                                {
+                                    <option value=@select.CountryNo.ToString()>@select.CountryName</option>
+                                }
+                            }
+
+                        </select>
+                    }
+                </div>
+                <!-- /ko -->
+                <!-- ko ifnot: IsClickAdd() -->
+                <button type="button" class="btn btn-primary" onclick="add()">新增</button>
+                <!-- /ko -->
+            </div>
+            <div class="col-12" id="add" name="add" style="display: none;">
+                <form method="POST" id="addform" name="addform">
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label class="ye">年份：</label>
+                        <select class="form-control required" id="addYear" name="addYear">
+                            @foreach (var item in TotalYears)
+                            {
+                                <option value="@item.YearNo">@item.YearName</option>
+                            }
+                        </select>
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>國家：</label>
+                        <select class="form-control required" id="addCountry" name="addCountry">
+                            @foreach (var item in TotalCountry)
+                            {
+                                <option value="@item.CountryNo">@item.CountryName</option>
+                            }
+                        </select>
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>電動車領牌數：</label>
+                        <input type="number" class="form-control required" id="addElecNumber" name="addElecNumber" />
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <label>全部車種領牌數：</label>
+                        <input type="number" class="form-control required" id="addTotal_RegisterNumber" name="addTotal_RegisterNumber" />
+                    </div>
+                    <br>
+                    <div class="col-12 form-inline">
+                        <button type="submit" class="btn btn-success" onclick="addRegister('addYear','addCountry','addElecNumber','addTotal_RegisterNumber'); return false;">確認</button>
+                        <span>&nbsp;&nbsp;</span>
+                        <button type="button" class="btn btn-secondary" onclick="cancelAdd()">取消</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-12">
+                <table class="table" id="TotalRegisterTable" name="TotalRegisterTable" style="text-align: center;">
+                    <thead>
+                        <tr>
+                            
+                            <th scope="col">年份</th>
+                            <th scope="col">國家</th>
+                            <th scope="col">電動車領牌數</th>
+                            <th scope="col">全部車種領牌數</th>
+                            <th scope="col">創建時間</th>
+                            <th scope="col">修改時間</th>
+                            <th scope="col">執行動作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (MgtTotalElecModel item in TotalElecs)
+                        {
+                            <tr>
+                                <!-- ko ifnot: IsEdit() && Item() == @item.TotalRegisterNo -->
+                                
+                                <td class="align-middle">@item.Year</td>
+                                <td class="align-middle">@item.Country</td>
+                                <td class="align-middle">@item.ElecRegisterNumber</td>
+                                <td class="align-middle">@item.TotalRegisterNumber</td>
+                                <td class="align-middle">@item.CreateTime</td>
+                                <td class="align-middle">@item.ModifyTime</td>
+                                <td class="align-middle">
+                                    <!-- ko if: IsClickEdit() && Item() != @item.TotalRegisterNo -->
+                                    <button type="button" class="btn btn-primary" disabled="disabled">修改</button>
+
+                                    <button type="button" class="btn btn-danger" disabled="disabled">刪除</button>
+                                    <!-- /ko -->
+                                    <!-- ko ifnot: IsClickEdit() -->
+                                    <button type="button" class="btn btn-primary" id="Edit" onclick="editElec('@item.TotalRegisterNo')">修改</button>
+                                    <span>&nbsp;&nbsp;</span>
+                                    <button type="button" class="btn btn-danger" onclick="deleteSubmit('@item.TotalRegisterNo')">刪除</button>
+                                    <!-- /ko -->
+                                </td>
+                                <!-- /ko -->
+                            </tr>
+                            <tr>
+                                <!-- ko if: IsEdit() && Item() == @item.TotalRegisterNo -->
+                                
+                                <td class="align-middle">@item.Year</td>
+                                <td class="align-middle">@item.Country</td>
+                                <td class="align-middle">
+                                    <input type="number" class="form-control" id="editElecRegisterNumber" name="editElecRegisterNumber" value="@item.ElecRegisterNumber">
+                                </td>
+                                <td class="align-middle">
+                                    <input type="number" class="form-control" id="editTotalRegisterNumber" name="editTotalRegisterNumber" value="@item.TotalRegisterNumber">
+                                </td>
+                                <td class="align-middle">@item.CreateTime</td>
+                                <td class="align-middle">@item.ModifyTime</td>
+                                <td class="align-middle">
+                                    <button type="button" class="btn btn-success" onclick="saveElec(@item.TotalRegisterNo, 'editElecRegisterNumber', 'editTotalRegisterNumber')">確認</button>
+                                    <button type="button" class="btn btn-secondary" onclick="cancelEdit(@item.TotalRegisterNo)">取消</button>
+                                </td>
+                                <!-- /ko -->
+                            </tr>
+
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+
+    this.IsClickAdd = ko.observable(false);
+    this.IsEdit = ko.observable(false);
+    this.IsClickEdit = ko.observable(false);
+    this.Item = ko.observable(0);
+    ko.applyBindings($("#MgtTotalElec").get(0));
+
+    //篩選國家
+    function select(data) {
+        let args = {
+            CountryNo: data
+        };
+        $.ajax({
+            url: '@Url.Action("SelectCountryNo")',
+            data: args,
+            method: "POST",
+            async: true,
+            success: function (response) {
+                if (response) {
+                    if (data != null && data != "-1") {
+                        window.location.href = window.location.href.split('?')[0] + "?CountryNo=" + data;
+                    }
+                    else {
+                        window.location.href = window.location.href.split('?')[0];
+                    }
+                } else {
+                    window.location.href = window.location.href.split('?')[0] + "?CountryNo=" + data;
+                    alert("查無資料");
+                }
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+    }
+    //新增
+    function add() {
+        this.IsClickAdd(true);
+
+        var add = document.getElementById("add");
+        var TotalRegisterTable = document.getElementById("TotalRegisterTable");
+
+        add.style.display = "block";
+        TotalRegisterTable.style.display = "none";
+    }
+
+    //儲存新增
+    function addRegister(addYear, addCountry, addElecNumber, addTotal_RegisterNumber) {
+        var YearNo = document.getElementById(addYear).value;
+        var CountryNo = document.getElementById(addCountry).value;
+        var ElecRegisterNumber = document.getElementById(addElecNumber).value;
+        var TotalRegisterNumber = document.getElementById(addTotal_RegisterNumber).value;
+        //console.log(ElecRegisterNumber)
+        //console.log(TotalRegisterNumber)
+
+        //數字限制條件 驗證非負整數（正整數+0）
+        var NumberReg = /^\d+$/;
+
+        //輸入檢查
+        if (!NumberReg.test(ElecRegisterNumber)) {
+            alert("請輸入正確車子數量！ (非負數字，且為整數)");
+            document.getElementById(addElecNumber).focus();
+            return false;
+        }
+        else if (!NumberReg.test(TotalRegisterNumber)) {
+            alert("請輸入正確車子數量！ (非負數字，且為整數)");
+            document.getElementById(addTotal_RegisterNumber).focus();
+            return false;
+        }
+        else if (parseInt(ElecRegisterNumber) > parseInt(TotalRegisterNumber)) {
+            alert("請輸入正確車子數量！(全部車種領牌數須高於電動車領牌數)");
+            document.getElementById(addElecNumber).focus();
+            return false;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "MgtTotalElec/InsertTotalElec",
+            data: {
+                "YearNo": YearNo,
+                "CountryNo": CountryNo,
+                "ElecRegisterNumber": ElecRegisterNumber,
+                "TotalRegisterNumber": TotalRegisterNumber
+            },
+            async: true,
+            beforeSend: function () {
+
+            },
+            success: function (result) {
+                //console.log(data);
+                if (result == true) {
+                    //searchSubmit();
+                    alert("新增成功")
+                    window.location.reload();
+                    //$("#msg").text("新增成功");
+                } else {
+                    alert("新增失敗!! 可能失敗原因：資料已存在、權限不足")
+                    //location.reload();
+                    //$("#msg").text("新增失敗!! 可能失敗原因：輸入錯誤(須為整數且不為負)、資料已存在、權限不足");
+                }
+
+
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+
+    }
+
+    //取消新增
+    function cancelAdd() {
+        this.IsClickAdd(false);
+
+        var add = document.getElementById("add");
+        var TotalRegisterTable = document.getElementById("TotalRegisterTable");
+
+        add.style.display = "none";
+        TotalRegisterTable.style.display = "inline-table";
+    }
+
+    //修改
+    function editElec(data) {
+        this.IsEdit(true);
+        this.IsClickEdit(true);
+        this.Item(data);
+
+        var editElecRegisterNumber = document.getElementById("editElecRegisterNumber");
+        editElecRegisterNumber.focus();
+    }
+
+    //取消修改
+    function cancelEdit(data) {
+        this.IsEdit(false);
+        this.IsClickEdit(false);
+        this.Item(data);
+    }
+
+    //儲存修改
+    function saveElec(id, editElecRegisterNumber, editTotalRegisterNumber) {
+        var ElecRegisterNumber = document.getElementById(editElecRegisterNumber).value;
+        var TotalRegisterNumber = document.getElementById(editTotalRegisterNumber).value;
+        //數字限制條件 驗證非負整數（正整數+0）
+        var NumberReg = /^\d+$/;
+
+        //輸入檢查
+        if (!NumberReg.test(ElecRegisterNumber)) {
+            alert("請輸入正確車子數量！ (非負數字，且為整數)");
+            document.getElementById(editElecRegisterNumber).focus();
+            return false;
+        }
+        else if (!NumberReg.test(TotalRegisterNumber)) {
+            alert("請輸入正確車子數量！ (非負數字，且為整數)");
+            document.getElementById(editTotalRegisterNumber).focus();
+            return false;
+        }
+        else if (parseInt(ElecRegisterNumber) > parseInt(TotalRegisterNumber)) {
+            alert("請輸入正確車子數量！(全部車種領牌數須高於電動車領牌數)");
+            document.getElementById(editElecRegisterNumber).focus();
+            return false;
+        }
+
+        this.IsEdit(false);
+        this.IsClickEdit(false);
+        this.Item(id);
+
+        $.ajax({
+            type: "POST",
+            url: "MgtTotalElec/UpdateTotalElec",
+            data: {
+                "ElecRegisterNumber": ElecRegisterNumber,
+                "TotalRegisterNumber": TotalRegisterNumber,
+                "TotalRegisterNo": id,
+            },
+            async: true,
+            beforeSend: function () {
+
+            },
+            success: function (result) {
+                //console.log(data);
+                if (result == true) {
+                    //searchSubmit();
+                    alert("修改成功")
+                    window.location.reload();
+                    //$("#msg").text("新增成功");
+                } else {
+                    alert("修改失敗，可能原因：權限不足")
+                    //location.reload();
+                    //$("#msg").text("新增失敗!! 可能失敗原因：輸入錯誤(須為整數且不為負)、資料已存在、權限不足");
+                }
+
+
+            },
+            error: function (e) {
+                console.log(e);
+            }
+        });
+
+
+    }
+
+    //刪除功能
+    function deleteSubmit(id) {
+        //視窗提示
+        if (window.confirm("是否確定要刪除?")) {
+            this.Item(id);
+            $.ajax({
+                type: "POST",
+                url: "MgtTotalElec/DeleteTotalElec",
+                data: {
+                    "TotalRegisterNo": id,
+                },
+                async: true,
+                beforeSend: function () {
+
+                },
+                success: function (result) {
+                    //console.log(data);
+                    if (result == true) {
+                        alert("刪除成功");
+                        window.location.reload();
+                        //$("#msg").text("新增成功");
+                    } else {
+                        alert("刪除失敗!! 可能失敗原因：權限不足");
+                        //window.location.reload();
+                        //$("#msg").text("新增失敗!! 可能失敗原因：輸入錯誤(須為整數且不為負)、資料已存在、權限不足");
+                    }
+
+
+                },
+                error: function (e) {
+                    console.log(e);
+                }
+            });
+        }
+    }
+</script>

@@ -1,0 +1,138 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EVTrend</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-dark border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand" style="color: white;" asp-area="" asp-controller="Home" asp-action="Index"><img id="logo" src="/images/logo.png"/></a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
+                    <ul class="navbar-nav navbar-right">
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="Content" asp-controller="TotalElecCarbon" asp-action="Index" id="TotalElecCarbon">總體數據圖表</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="Content" asp-controller="DetailedElecCarbon" asp-action="Index" id="DetailedElecCarbon" style="display: none;">細部數據圖表</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="Content" asp-controller="MgtTotalCarbon" asp-action="Index" id="MgtTotalCarbon" style="display: none;">總體碳管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="Content" asp-controller="MgtTotalElec" asp-action="Index" id="MgtTotalElec" style="display: none;">總體電動車管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="Content" asp-controller="MgtDetailedCarbon" asp-action="Index" id="MgtDetailedCarbon" style="display: none;">細部碳管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="Content" asp-controller="MgtDetailedElec" asp-action="Index" id="MgtDetailedElec" style="display: none;">細部電動車管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="News" asp-controller="News" asp-action="Index" id="ShowNews">最新消息</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="News" asp-controller="MgtNews" asp-action="Index" id="MgtNews" style="display: none;">最新消息管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="Member" asp-controller="Member" asp-action="Index" id="ShowMember" style="display: none;">會員中心</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="Member" asp-controller="MgtMember" asp-action="Index" id="MgtMember" style="display: none;">使用者管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Account" asp-action="Login" id="Log">使用者登入</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Account" asp-action="Register" id="Register">註冊會員</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2021 - EVTrend
+        </div>
+    </footer>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
+
+@* 最後才跑JS *@
+<script defer="defer">
+    //Ajax 需同步化 取得登入狀態
+    $.ajax({
+        url: '/Account/CheckLoginStatus',
+        async: false,
+        success: function (response) {
+            if (response != null) {
+                //抓Object
+                var DetailedElecCarbon = document.getElementById("DetailedElecCarbon");
+                var ShowMember = document.getElementById("ShowMember");
+                var Log = document.getElementById("Log");
+                var Register = document.getElementById("Register");
+
+                //使用者登入才可以瀏覽細部資料
+                DetailedElecCarbon.style.display = "block";
+
+                //使用者登入才可以瀏覽會員中心
+                ShowMember.style.display = "block";
+
+                //修改路徑
+                Log.href = '/Account/LogOff';
+
+                //超連結變更為登出
+                Log.innerText = "登出";
+
+                //使用者登入時 不可以註冊
+                Register.style.display = "none";
+
+                if (response == "0") { //管理員
+                    //抓Object
+                    var MgtTotalCarbon = document.getElementById("MgtTotalCarbon");
+                    var MgtTotalElec = document.getElementById("MgtTotalElec");
+                    var MgtDetailedCarbon = document.getElementById("MgtDetailedCarbon");
+                    var MgtDetailedElec = document.getElementById("MgtDetailedElec");
+                    var ShowNews = document.getElementById("ShowNews");
+                    var MgtNews = document.getElementById("MgtNews");
+                    var MgtMember = document.getElementById("MgtMember");
+
+                    //管理員隱藏最新消息、會員中心的功能
+                    ShowNews.style.display = "none";
+                    ShowMember.style.display = "none";
+
+                    //管理員才可以管理資料
+                    MgtTotalCarbon.style.display = "block";
+                    MgtTotalElec.style.display = "block";
+                    MgtDetailedCarbon.style.display = "block";
+                    MgtDetailedElec.style.display = "block";
+                    MgtNews.style.display = "block";
+                    MgtMember.style.display = "block";
+                }
+            }
+        },
+        error: function (xhr, status, error) {
+            console.log("Failed");
+        }
+    });
+</script>
