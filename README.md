@@ -8,5 +8,4 @@
 3. 了解台、美兩國電動車與碳排放的關係、分析台灣各交通工具碳排比例。
 ## 系統架構
 使用 ASP.NET MVC 架構建立系統，最後佈署至 Azure App Service，資料庫則是採用 Azure Database for MySQL
-## 首頁
 
